@@ -21,44 +21,12 @@ This version runs in a **terminal environment** using ASCII rendering.
 ---
 
 ## ⚙️ Tech Stack
-
-* Assembly: NASM (x86 / 16-bit or 32-bit depending on setup)
 * Output: Terminal (ASCII rendering)
 * Platform: Linux / Windows (via terminal)
 
 ---
 
 ## 🚀 How to Run
-
-### 1. Install NASM
-
-Linux:
-
-```bash
-sudo apt install nasm
-```
-
-Windows:
-Download from https://nasm.us
-
----
-
-### 2. Build
-
-```bash
-nasm -f elf32 src/main.asm -o build/main.o
-ld -m elf_i386 build/main.o -o build/arcade
-```
-
----
-
-### 3. Run
-
-```bash
-./build/arcade
-```
-
----
 
 ## 🧠 Architecture Overview
 
