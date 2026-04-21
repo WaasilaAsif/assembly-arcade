@@ -30,7 +30,8 @@ msgWin      BYTE "You reached the goal!",0
 msgQuit     BYTE "Goodbye!",0
 
 .code
-main PROC
+PUBLIC maze_start
+maze_start PROC
     mov playerRow, 1
     mov playerCol, 1
     call Clrscr
@@ -76,6 +77,8 @@ MoveUp:
 MoveDown:
     movzx eax, playerRow
     inc eax
+    cmp eax, ROWS         ; ADD bounds check
+    jge GameLoop
     movzx ebx, playerCol
     call CanMove
     cmp al, 0
@@ -99,6 +102,8 @@ MoveRight:
     movzx eax, playerRow
     movzx ebx, playerCol
     inc ebx
+    cmp ebx, COLS         ; ADD bounds check
+    jge GameLoop
     call CanMove
     cmp al, 0
     jne GameLoop
@@ -120,16 +125,15 @@ WinGame:
     call WriteString
     call Crlf
     call WaitMsg
-    exit
+    ret
 
 QuitGame:
     call Clrscr
     mov edx, OFFSET msgQuit
     call WriteString
     call Crlf
-    call WaitMsg
-    exit
-main ENDP
+    ret
+maze_start ENDP
 
 DrawMaze PROC
     mov dh, 0
@@ -196,6 +200,8 @@ CanMove PROC
     je WallCell
     cmp al, '-'
     je WallCell
+    cmp al, '+'       ; ADD THIS
+    je WallCell
     jmp OpenCell
 WallCell:
     mov al, 1
@@ -205,4 +211,4 @@ OpenCell:
     ret
 CanMove ENDP
 
-END main
+END 
