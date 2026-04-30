@@ -1,71 +1,159 @@
-# filepath: e:\assembly-arcade\build.ps1
+# filepath: D:\COAL-Project-final\assembly-arcade\scripts\build.ps1
+# Run from anywhere -- paths resolve relative to this script's location
+param(
+    [string]$Target = "arcade"   # "arcade" | "snake" | "maze" | "hangman" | "tictactoe"
+)
 
-$jwasm  = "c:\Users\Home\.vscode\extensions\istareatscreens.masm-runner-0.9.1\native\JWASM\JWASM.EXE"
-$jwlink = "c:\Users\Home\.vscode\extensions\istareatscreens.masm-runner-0.9.1\native\JWLINK\JWlink.exe"
-$irvine = "c:\Users\Home\.vscode\extensions\istareatscreens.masm-runner-0.9.1\native\irvine"
-$src    = "e:\assembly-arcade\src"
-$out    = "e:\assembly-arcade\bin"
+# ---------------------------------------------------------------
+#  Resolve project root  (script lives in <root>\scripts\)
+# ---------------------------------------------------------------
+$root   = Split-Path $PSScriptRoot -Parent
+$src    = "$root\src"
+$out    = "$PSScriptRoot\bin"          # scripts\bin\
 
-# Create output dir if it doesn't exist
-if (!(Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
+# ---------------------------------------------------------------
+#  Find masm-runner extension on this machine automatically
+# ---------------------------------------------------------------
+$vsExt  = "$env:USERPROFILE\.vscode\extensions"
+$runner = Get-ChildItem "$vsExt\istareatscreens.masm-runner-*" `
+            -Directory -ErrorAction SilentlyContinue |
+          Sort-Object Name -Descending |
+          Select-Object -First 1
 
-$files = @(
+if (-not $runner) {
+    Write-Host "ERROR: masm-runner extension not found under $vsExt" -ForegroundColor Red
+    exit 1
+}
+
+$jwasm  = "$($runner.FullName)\native\JWASM\JWASM.EXE"
+$jwlink = "$($runner.FullName)\native\JWLINK\JWlink.exe"
+$irvine = "$($runner.FullName)\native\irvine"
+
+foreach ($tool in @($jwasm, $jwlink)) {
+    if (!(Test-Path $tool)) {
+        Write-Host "ERROR: Tool not found: $tool" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# ---------------------------------------------------------------
+#  File sets
+# ---------------------------------------------------------------
+$allFiles = @(
     "$src\main.asm",
-    "$src\games\maze.asm",
     "$src\games\snake.asm",
+    "$src\games\maze.asm",
     "$src\games\hangman.asm",
     "$src\games\tictactoe.asm"
 )
 
-$failed = $false
+$gameSources = @{
+    "snake"     = "$src\games\snake.asm"
+    "maze"      = "$src\games\maze.asm"
+    "hangman"   = "$src\games\hangman.asm"
+    "tictactoe" = "$src\games\tictactoe.asm"
+}
 
-# Assemble each file
-foreach ($f in $files) {
+if ($Target -eq "arcade") {
+    $filesToBuild = $allFiles
+    $exeName      = "arcade.exe"
+
+} elseif ($gameSources.ContainsKey($Target)) {
+    # Auto-generate a minimal stub main if it doesn't exist yet
+    $stubDir  = "$src\stubs"
+    $stubFile = "$stubDir\${Target}_main.asm"
+
+    if (!(Test-Path $stubDir)) { New-Item -ItemType Directory -Path $stubDir | Out-Null }
+
+    if (!(Test-Path $stubFile)) {
+        $proto = "${Target}_start"
+        $stub  = @"
+INCLUDE Irvine32.inc
+$proto PROTO
+.code
+main PROC
+    call $proto
+    exit
+main ENDP
+END main
+"@
+        Set-Content -Path $stubFile -Value $stub
+        Write-Host "Generated stub: $stubFile" -ForegroundColor DarkCyan
+    }
+
+    $filesToBuild = @($gameSources[$Target], $stubFile)
+    $exeName      = "$Target.exe"
+
+} else {
+    Write-Host "Unknown target '$Target'." -ForegroundColor Red
+    Write-Host "Usage: .\scripts\build.ps1 [-Target arcade|snake|maze|hangman|tictactoe]"
+    exit 1
+}
+
+# ---------------------------------------------------------------
+#  Create output dir
+# ---------------------------------------------------------------
+if (!(Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
+
+# ---------------------------------------------------------------
+#  Assemble
+# ---------------------------------------------------------------
+$objFiles = @()
+$failed   = $false
+
+foreach ($f in $filesToBuild) {
     if (!(Test-Path $f)) {
         Write-Host "SKIP (not found): $f" -ForegroundColor Yellow
         continue
     }
+
+    # Put .obj next to .asm so JWlink can find them easily
     $obj = $f -replace '\.asm$', '.obj'
-    Write-Host "Assembling $f ..." -ForegroundColor Cyan
+
+    Write-Host "Assembling: $([System.IO.Path]::GetFileName($f)) ..." -ForegroundColor Cyan
     & $jwasm /Zd /coff /Fo"$obj" /I"$irvine" "$f"
+
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "FAILED: $f" -ForegroundColor Red
+        Write-Host "ASSEMBLE FAILED: $f" -ForegroundColor Red
         $failed = $true
         break
     }
+    $objFiles += $obj
 }
 
-if ($failed) { exit 1 }
-
-# Collect only .obj files that actually exist
-$objFiles = $files |
-    ForEach-Object { $_ -replace '\.asm$', '.obj' } |
-    Where-Object { Test-Path $_ }
-
-if ($objFiles.Count -eq 0) {
-    Write-Host "No .obj files found to link." -ForegroundColor Red
+if ($failed -or $objFiles.Count -eq 0) {
+    Write-Host "Build aborted." -ForegroundColor Red
     exit 1
 }
 
-# Build JWlink file arguments as a flat array
+# ---------------------------------------------------------------
+#  Link
+# ---------------------------------------------------------------
 $fileArgList = @()
 foreach ($obj in $objFiles) {
     $fileArgList += "file"
     $fileArgList += "`"$obj`""
 }
 
-Write-Host "Linking..." -ForegroundColor Cyan
+$exePath = "$out\$exeName"
+Write-Host "Linking -> $exeName ..." -ForegroundColor Cyan
+
 & $jwlink format windows pe `
     LIBPATH "$irvine" `
     LIBRARY "$irvine\Irvine32.lib" `
     LIBRARY "$irvine\Kernel32.lib" `
     LIBRARY "$irvine\User32.lib" `
     @fileArgList `
-    name "$out\arcade.exe"
+    name "$exePath"
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "Build succeeded: $out\arcade.exe" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "  BUILD OK --> $exePath" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "  To run:" -ForegroundColor DarkCyan
+    Write-Host "    .\scripts\bin\$exeName" -ForegroundColor White
+    Write-Host ""
 } else {
-    Write-Host "Link failed." -ForegroundColor Red
+    Write-Host "LINK FAILED." -ForegroundColor Red
     exit 1
 }
