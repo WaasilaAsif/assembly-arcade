@@ -122,7 +122,8 @@ str_dup_msg  BYTE "Already guessed, try again!   ",0
 
 .CODE
 
-main PROC
+PUBLIC hangman_start
+hangman_start PROC
     call Randomize              ; seed once at program start
 
 new_game:
@@ -310,8 +311,7 @@ ask_again:
     je   new_game
     cmp  al, 'y'
     je   new_game
-    call ExitProcess
-main ENDP
+    ret
 
 ;  init_round - clear state and pick a random word
 init_round PROC
@@ -759,4 +759,6 @@ rv_loop:
     ret
 reveal_word ENDP
 
-END main
+hangman_start ENDP
+
+END
