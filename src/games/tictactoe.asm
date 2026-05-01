@@ -92,7 +92,6 @@ msgInvMode      BYTE "  [!] Invalid choice. Defaulting to Two Players.", 0Dh, 0A
 
 tictactoe_start PROC
 
-```
 call Randomize
 
 mov  eax, COLOR_NORM
@@ -102,13 +101,11 @@ call WriteString
 
 call ShowGuide
 call AskGameMode
-```
 
 GameLoop:
 call Clrscr
 call DisplayBoard
 
-```
 mov  bl, currentPlayer
 cmp  bl, 'O'
 jne  HumanTurn
@@ -117,7 +114,6 @@ cmp  bl, 1
 jne  HumanTurn
 call AIMove
 jmp  AfterInput
-```
 
 HumanTurn:
 call TakeInput
@@ -127,14 +123,12 @@ call CheckWin
 cmp  eax, 1
 je   GameOver
 
-```
 call CheckDraw
 cmp  eax, 1
 je   DrawOver
 
 call SwitchPlayer
 jmp  GameLoop
-```
 
 GameOver:
 call Clrscr
@@ -169,9 +163,7 @@ mov  edx, OFFSET msgBye
 call WriteString
 call WaitMsg
 
-```
 ret
-```
 
 tictactoe_start ENDP
 
