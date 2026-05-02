@@ -39,6 +39,10 @@ snakeLen   DWORD 4            ; starting length
 snakeHead  DWORD 0            ; index of head in circular buffer
 snakeTail  DWORD 0            ; index of tail
 
+; addding the new vars
+newRow    BYTE 0
+newCol    BYTE 0
+
 direction  BYTE  DIR_RIGHT
 nextDir    BYTE  DIR_RIGHT
 
@@ -58,7 +62,7 @@ newlineStr BYTE  0Dh, 0Ah, 0
 
 snakeBodyCh  BYTE  0B2h       ; block character for body
 snakeHeadCh  BYTE  0FEh       ; solid square for head
-foodCh       BYTE  04h        ; diamond suit for food
+foodCh       BYTE  '*'        ; diamond suit for food
 borderH      BYTE  0CDh       ; double-line horizontal
 borderV      BYTE  0BAh       ; double-line vertical
 cornerTL     BYTE  0C9h
@@ -388,15 +392,20 @@ MoveSnake PROC
     cmp   ebx, BOARD_W
     jge   @@dead
 
-    ; --- self collision (check every body segment) ---
+    ; save new position cleanly
+    mov   newRow, al
+    mov   newCol, bl
+
+   
+    ; --- self collision ---
     mov   ecx, snakeLen
     mov   edi, snakeTail
 @@selfLoop:
     movzx edx, snakeRow[edi]
-    cmp   edx, eax
+    cmp   dl, newRow
     jne   @@selfNext
     movzx edx, snakeCol[edi]
-    cmp   edx, ebx
+    cmp   dl, newCol
     je    @@dead
 @@selfNext:
     inc   edi
@@ -406,6 +415,7 @@ MoveSnake PROC
 @@noWrap2:
     loop  @@selfLoop
 
+
     ; --- advance head pointer ---
     inc   esi
     cmp   esi, MAX_LEN
@@ -413,19 +423,17 @@ MoveSnake PROC
     mov   esi, 0
 @@noWrapHead:
     mov   snakeHead, esi
-    mov   snakeRow[esi], al    ; store new row (al = eax low byte)
-    push  eax
-    mov   eax, ebx
-    mov   snakeCol[esi], al    ; store new col
-    pop   eax
+    mov   al, newRow
+    mov   snakeRow[esi], al
+    mov   al, newCol
+    mov   snakeCol[esi], al
 
     ; --- food eaten? ---
+    mov   al, newRow
     cmp   al, foodRow
     jne   @@noFood
-    push  eax
-    mov   eax, ebx
+    mov   al, newCol
     cmp   al, foodCol
-    pop   eax
     jne   @@noFood
 
     ; grow: don't advance tail
@@ -434,6 +442,7 @@ MoveSnake PROC
     call  DrawScore
     call  PlaceFood
     jmp   @@done
+
 
 @@noFood:
     ; advance tail
