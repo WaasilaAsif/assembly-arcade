@@ -113,11 +113,11 @@ cd scripts
 <!-- Replace with actual screenshots -->
 | Main Menu | Snake | Maze |
 |-----------|-------|------|
-| ![Main](docs/screenshots/main.png) | ![Snake](docs/screenshots/snake.png) | ![Maze](docs/screenshots/maze.png) |
+| ![Main](docs/main.png) | ![Snake](docs/snake.png) | ![Maze](docs/maze.png) |
 
 | Tic-Tac-Toe | Hangman |
 |-------------|---------|
-| ![TicTacToe](docs/screenshots/tictactoe.png) | ![Hangman](docs/screenshots/hangman.png) |
+| ![TicTacToe](docs/tictactoe.png) | ![Hangman](docs/hangman.png) |
 
 ---
 
@@ -125,7 +125,7 @@ cd scripts
 
 | Error | Fix |
 |-------|-----|
-| `Syntax error: ■` on line 1 | Source file has a UTF-8 BOM. See [how_to_run.md](how_to_run.md) to strip it |
+| `Syntax error: ` on line 1 | Source file has a UTF-8 BOM. See [how_to_run.md](how_to_run.md) to strip it |
 | `masm-runner extension not found` | Install the MASM Runner extension in VS Code |
 | `build.ps1 cannot be loaded` | Run `Set-ExecutionPolicy RemoteSigned` as Administrator |
 | `SKIP (not found): x.asm` | File missing from `src/games/` — check your directory |
