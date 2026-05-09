@@ -147,6 +147,8 @@ cd scripts
 
 ##  Authors
 
+<div align="center">
+
 | Name | Roll Number |
 |------|-------------|
 | Waasila Asif | 502395 |
@@ -155,6 +157,8 @@ cd scripts
 | Fatima Sajjad | 503676 |
 
 **BSCS-14B · SEECS, NUST**
+
+</div>
 
 ---
 
