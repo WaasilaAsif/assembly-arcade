@@ -1,0 +1,4 @@
+C:\Users\Waasila Asif\.vscode\extensions\istareatscreens.masm-runner-0.9.1\native\irvine\SmallWin.inc(11) : Warning A4095: Multiple .MODEL directives, .MODEL ignored
+ C:\Users\Waasila Asif\.vscode\extensions\istareatscreens.masm-runner-0.9.1\native\irvine\SmallWin.inc(11): Included by
+  C:\Users\Waasila Asif\.vscode\extensions\istareatscreens.masm-runner-0.9.1\native\irvine\Irvine32.inc(5): Included by
+   D:\COAL-Project-final\assembly-arcade\src\games\tictactoe.asm(11): Main line code
